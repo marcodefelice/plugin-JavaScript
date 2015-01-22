@@ -116,4 +116,134 @@ class usereFunction {
 	}
 	
 }
+
+// ########################
+
+
+// CLASSE PER FORMARE I CONTENUTI
+class getContent extends option{
+	public $result;
+	public $where;
+	public $page;
+	public $result_a = array();
+	
+	function getTopList($sez = '') {
+	
+	if($sez != '') { $ez = '&& sez = '.$sez; }	 else { $ez = ''; }	
+	
+	$query = mysql_query("SELECT * FROM annunc WHERE toplist = 1 && lista = 0 $ez ORDER BY id DESC");
+	
+	
+	if(@mysql_num_rows($query) == 0) {
+		
+		$this->result .= '';
+	} else {
+			  
+	while($ar = mysql_fetch_array($query)) {
+			$this->result .= '
+        	  <a href="view_annuncio.php?id='.$ar['id'].'"><div id="inner_top_slider_in"><img src="img/annunci/'.$ar['directory'].'/200X_'.$ar['img'].'" width="150px"  /></div></a>
+        	 ';
+		}
+	}
+	}
+	
+	private function getList($sez = '') {
+			
+	if($sez != '') { $ez = '&& sez = '.$sez; }	  else { $ez = ''; }		
+			
+	$query = mysql_query("SELECT * FROM annunc WHERE lista = 1 && toplist = 0 $ez ORDER BY id DESC");
+	
+		
+		if(@mysql_num_rows($query) == 0) {
+		
+		$this->result .= '';
+	} else {
+		
+	while($ar = mysql_fetch_array($query)) {
+			$this->result .= '
+        	<a href="view_annuncio.php?id='.$ar['id'].'"><div id="inner_slider_in"><img src="img/annunci/'.$ar['directory'].'/200X_'.$ar['img'].'" width="120px"  /></div></a>';
+		}
+	}
+	}
+	
+	function getAnnunc($sez = '') {
+	// impostiamo il luogo
+	
+	if(!isset($_SESSION['where'])) {
+		$this->where = 'Tutta Italia';
+	}
+			
+	if($sez != '') { $ez = '&& sez = '.$sez; }		 else { $ez = ''; }	
+			
+	$query = mysql_query("SELECT * FROM annunc WHERE lista = 0 && toplist = 0 $ez ORDER BY id DESC");
+	
+	if(@mysql_num_rows($query) == 0) {
+		
+		$this->result .= '<center>Nessun annuncio trovato</center>';
+	} else {
+	while($ar = mysql_fetch_array($query)) {
+			$this->result .= '<a href="view_annuncio.php?id='.$ar['id'].'"><div id="annunci_in_on">
+        <table width="95%" border="0" cellpadding="4" cellspacing="4">
+  <tr>
+    <td width="46%" class="in_an_tb"><img src="img/annunci/'.$ar['directory'].'/100X_'.$ar['img'].'" /></td>
+    <td width="54%" valign="top"><p><span class="redMiniTitle">'.$ar['titolo'].'
+</span></p>
+      <p>'.$this->tagliaStringa($ar['messaggio'],100).'</p></td>
+  </tr>
+</table>
+		</div></a>';
+		}
+	}
+	}
+	
+	// calcolo delle pagine
+	
+	public function calqPageView($val, $start, $curPgm, $sez, $href, $curpage) {
+		$limit = $val;
+		$start = $start + $val;
+		if($sez != '') { $ez = '&& sez = '.$sez; }		 else { $ez = ''; }	
+		$x = mysql_query("SELECT * FROM annunc WHERE lista = 0 && toplist = 0 $ez");
+		@$numRow = mysql_num_rows($x); 
+		@$totalPage = $numRow / $val; //troviamo il numero di pagine esatte da creare	 RISOLTO TOGLIENdO L'ARROTONDAMENTO??	
+		$pg = $curPgm+1;
+		$pgmeno = $curPgm-1;
+		$startmeno = $start - $val;		
+		if(!$numRow) {
+		$this->page = ""; // se non ci sono pagine
+		} else if($curPgm == 0 && $pg > $totalPage ) {
+		$this->page = ""; // se non ci sono pagine
+		} else if($pg > $totalPage++ ) { // torna indietro
+		$this->page = "<a href=\"index.php?rq=$pgw&strt=$startmeno&pag=$pgmeno\" ><B><<</B></a> - Pagina: $pg di $totalPage ";
+		} else if($curPgm < 0 || $curPgm == 0) { // pagina successiva
+		$go = 0;
+		for($count = 1; $count <= $totalPage; $count++) {
+			if($curpage == $pg) {
+			$this->page .= "<a href=\"$href&init=$go&curpage=$pg#product\"><p id=\"pageNumber\" class=\"current\"> $pg </p></a>";
+		} else { $this->page .= "<a href=\"$href&init=$go&curpage=$pg#product\"><p id=\"pageNumber\" > $pg </p></a>"; }
+		$pg++;
+		$go = $go+$start;
+			}
+		} 
+	}
+	
+	private function getAnnuncioComplete($id) {
+		
+		$ar = mysql_fetch_array(mysql_query("SELECT * FROM annunc WHERE id = '$id'"));
+		// 1° dato
+		$this->result_a['titolo'] = $ar['titolo'];
+		$this->result_a['messaggio'] = $ar['messaggio'];
+		$this->result_a['bigfoto'] = '<a href="img/annunci/'.$ar['directory'].'/800X_'.$ar['img'].'" rel="lightbox[a]"><img src="img/annunci/'.$ar['directory'].'/400X_'.$ar['img'].'" width="350px" /></a>';
+		$this->result_a['directory'] = $ar['directory'];
+		
+		// ora recuperiamo le foto
+		$query = mysql_query("SELECT * FROM image WHERE id_user = '$id'");
+		while($arimg = mysql_fetch_array($query)) {
+			$this->result_a['img'] .= "<div class=\"foto_thumb\"><a style=\"cursor:pointer; \"onclick=\"loadImage('$arimg[image]') \"><img src=\"img/annunci/$ar[directory]/100X_$arimg[image]\" /></a></div>";
+		}
+		
+	}
+	
+}
+
+
 ?>
